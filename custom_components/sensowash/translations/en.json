@@ -14,7 +14,7 @@
       },
       "pairing": {
         "title": "Pair your SensoWash",
-        "description": "**{name}** uses the serial Bluetooth protocol and needs to be paired before it can be controlled.\n\n**Press the Bluetooth button on your toilet now.** You have {timeout} seconds.\n\nThe button is usually located on the side of the unit or the remote control."
+        "description": "**{name}** uses the serial Bluetooth protocol and needs to be paired before it can be controlled.\n\n### How to put your toilet in pairing mode\n\n1. Make sure the toilet is powered on\n2. Locate the **Bluetooth pairing button** — on most models this is a small button on the **side panel** of the toilet unit, marked with the Bluetooth symbol (℃). On remote-control models it may be on the remote.\n3. **Press and hold the button for 3 seconds** until the indicator flashes\n4. The toilet will respond to Home Assistant automatically\n\nYou have **{timeout} seconds** from when this screen appeared. If the timer runs out, you can try again on the next screen."
       },
       "pairing_confirm": {
         "title": "Pairing successful!",
