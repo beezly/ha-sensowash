@@ -11,18 +11,35 @@
       "bluetooth_confirm": {
         "title": "Found SensoWash",
         "description": "Do you want to set up **{name}** ({address})?"
+      },
+      "pairing": {
+        "title": "Pair your SensoWash",
+        "description": "**{name}** uses the serial Bluetooth protocol and needs to be paired before it can be controlled.\n\n**Press the Bluetooth button on your toilet now.** You have {timeout} seconds.\n\nThe button is usually located on the side of the unit or the remote control."
+      },
+      "pairing_confirm": {
+        "title": "Pairing successful!",
+        "description": "**{name}** has been paired. The pairing key has been saved — you won't need to do this again.\n\nClick **Submit** to finish setup."
+      },
+      "pairing_failed": {
+        "title": "Pairing timed out",
+        "description": "No response was received from **{name}** within {timeout} seconds. Make sure you pressed the Bluetooth button on the toilet during the countdown.\n\nWould you like to try again?",
+        "data": {
+          "retry": "Try again"
+        }
       }
     },
     "abort": {
       "already_configured": "[%key:common::config_flow::abort::already_configured_device%]",
-      "no_devices_found": "No SensoWash devices found nearby."
+      "already_in_progress": "[%key:common::config_flow::abort::already_in_progress%]",
+      "no_devices_found": "No SensoWash devices found nearby.",
+      "pairing_failed": "Pairing was cancelled."
     }
   },
   "options": {
     "step": {
       "init": {
         "title": "SensoWash options",
-        "description": "Configure options for {address}.\n\nThe **pairing key** is only required for older serial-protocol models (Starck F Lite/Plus, i Lite/Plus). Leave blank for modern GATT devices.",
+        "description": "Configure options for {address}.\n\nThe **pairing key** is only needed for older serial-protocol models. Leave blank for modern GATT devices.",
         "data": {
           "pairing_key": "Pairing key (hex, e.g. 01:23:45:67)"
         }
