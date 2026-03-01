@@ -12,7 +12,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.restore_state import RestoreEntity
 
-from sensowash.models import (
+from .lib.models import (
     DeodorizationDelay,
     DryerSpeed,
     DryerTemperature,

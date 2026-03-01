@@ -12,7 +12,7 @@ from homeassistant.components.binary_sensor import (
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from sensowash.models import LidState, OnOff
+from .lib.models import LidState, OnOff
 
 from . import SensoWashConfigEntry
 from .coordinator import SensoWashCoordinator

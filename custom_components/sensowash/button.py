@@ -8,7 +8,7 @@ from homeassistant.components.button import ButtonEntity, ButtonEntityDescriptio
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from sensowash.models import (
+from .lib.models import (
     DryerSpeed,
     DryerTemperature,
     NozzlePosition,

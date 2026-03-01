@@ -8,7 +8,7 @@ from homeassistant.components.switch import SwitchEntity, SwitchEntityDescriptio
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from sensowash.models import OnOff
+from .lib.models import OnOff
 
 from . import SensoWashConfigEntry
 from .coordinator import SensoWashCoordinator

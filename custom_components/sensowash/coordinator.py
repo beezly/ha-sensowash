@@ -14,9 +14,9 @@ from homeassistant.const import CONF_ADDRESS
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
-from sensowash.client import SensoWashClient
-from sensowash.exceptions import ConnectionError as SensoConnectionError, PairingRequired
-from sensowash.models import DeviceCapabilities, ErrorCode
+from .lib.client import SensoWashClient
+from .lib.exceptions import ConnectionError as SensoConnectionError, PairingRequired
+from .lib.models import DeviceCapabilities, ErrorCode
 
 from .const import CONF_PAIRING_KEY, DOMAIN, UPDATE_INTERVAL
 
@@ -145,8 +145,8 @@ class SensoWashCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         Updates the coordinator data in-place and signals listeners without
         doing a full poll.
         """
-        from sensowash.constants import CHARACTERISTICS
-        from sensowash.models import (
+        from .lib.constants import CHARACTERISTICS
+        from .lib.models import (
             DryerSpeed,
             DryerTemperature,
             LidState,

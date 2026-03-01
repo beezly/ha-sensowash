@@ -14,7 +14,7 @@ from homeassistant.const import UnitOfTemperature, UnitOfTime
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from sensowash.models import DescalingState, ErrorCode
+from .lib.models import DescalingState, ErrorCode
 
 from . import SensoWashConfigEntry
 from .coordinator import SensoWashCoordinator
