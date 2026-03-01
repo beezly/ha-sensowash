@@ -295,6 +295,12 @@ class SensoWashCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             except Exception as exc:  # noqa: BLE001
                 _LOGGER.debug("%s: could not poll proximity detection: %s", self.device_name, exc)
 
+            # Merge into existing data so write-only keys (restored by RestoreEntity)
+            # are not wiped when the poll returns a dict that doesn't include them.
+            if self.data:
+                merged = dict(self.data)
+                merged.update(state)
+                return merged
             return state
 
         except UpdateFailed:
