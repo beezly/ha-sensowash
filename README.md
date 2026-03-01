@@ -98,7 +98,7 @@ is all that's required.
 
 ## Entities
 
-Entities are registered based on what the toilet actually supports — not all will appear on every model.
+Entities are registered based on what the toilet actually supports — not all will appear on every model. Serial-protocol devices are write-only for some settings (no readback), so selects may show **unknown** until you set them.
 
 ### Binary Sensors
 | Entity | Description |
@@ -198,6 +198,36 @@ factory reset the toilet or reinstall the integration.
   at a time. If it was previously paired via the Duravit app, you may need to reset
   the Bluetooth pairing on the toilet first (hold the Bluetooth button for ~10 seconds
   until the LED flashes rapidly).
+
+---
+
+### Services
+
+Scheduling features that don't map to simple entity types are exposed as HA services,
+callable from **Developer Tools → Actions**, automations, and scripts.
+
+| Service | Description |
+|---|---|
+| `sensowash.set_seat_heating_schedule` | Program seat heating time windows and temperature |
+| `sensowash.get_seat_heating_schedule` | Read current schedule (logged to HA log) |
+| `sensowash.clear_seat_heating_schedule` | Remove all seat heating windows |
+| `sensowash.set_uvc_schedule` | Set UVC disinfection trigger times |
+| `sensowash.set_uvc_schedule_default` | Reset UVC schedule to factory default (02:00 & 03:00) |
+
+Example — warm seat on weekday mornings:
+```yaml
+action: sensowash.set_seat_heating_schedule
+data:
+  config_entry_id: "your_entry_id"
+  enabled: true
+  temperature: 2   # 0=Off 1=Warm 2=Warmer 3=Hot
+  windows:
+    - from_hour: 6
+      from_minute: 30
+      to_hour: 8
+      to_minute: 0
+      days: [1, 2, 3, 4, 5]   # 1=Mon … 7=Sun
+```
 
 ---
 
