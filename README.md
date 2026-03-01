@@ -106,8 +106,16 @@ Entities are registered based on what the toilet actually supports — not all w
 | **Wash active** | True while a wash cycle is running |
 | **Dryer active** | True while the dryer is running |
 | **Lid** | Open / Closed |
-| **Seat occupied** | True when someone is seated (serial protocol only — derived from toilet state) |
+| **Seat occupied** | True when someone is seated (serial protocol only — see note below) |
 | **Deodorizing** | True while deodorizer is running |
+
+> **Seat occupied (serial protocol only):** The occupancy state is decoded from the
+> toilet's status packet — the same packet used for wash/dryer state. It reflects
+> whether the proximity/weight sensor detects someone seated. Because the toilet does
+> not push this state unsolicited, the integration polls every **10 seconds** when
+> the seat occupied entity is active (reduced from the normal 30-second interval).
+> GATT-protocol models (Classic, U, Starck F Pro, i Pro) do not expose a live
+> occupancy characteristic and will not have this entity.
 
 ### Sensors
 | Entity | Description |
