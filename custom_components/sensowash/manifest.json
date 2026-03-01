@@ -16,7 +16,8 @@
   ],
   "dependencies": ["bluetooth"],
   "requirements": [
-    "sensowash-ble @ git+https://github.com/beezly/sensowash-ble.git@master"
+    "sensowash-ble @ git+https://github.com/beezly/sensowash-ble.git@master",
+    "bleak-retry-connector>=3.4.0"
   ],
   "config_flow": true
 }

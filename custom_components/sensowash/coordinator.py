@@ -6,6 +6,8 @@ import logging
 from datetime import timedelta
 from typing import Any
 
+from bleak_retry_connector import BleakClientWithServiceCache, establish_connection
+
 from homeassistant.components.bluetooth import async_ble_device_from_address
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_ADDRESS
@@ -81,10 +83,28 @@ class SensoWashCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 )
 
             _LOGGER.debug("Connecting to %s (%s)", self.device_name, self.address)
+
+            async def _factory(device, disconnected_cb, timeout):
+                """Use bleak_retry_connector for robust proxy-aware connections.
+
+                - Retries up to 3 times on transient BLE failures
+                - BleakClientWithServiceCache caches GATT service discovery,
+                  avoiding a slow re-discovery on every reconnect (important
+                  over ESPHome Bluetooth proxies where discovery takes 2-3 s)
+                """
+                return await establish_connection(
+                    BleakClientWithServiceCache,
+                    device,
+                    self.device_name,
+                    disconnected_callback=disconnected_cb,
+                    max_attempts=3,
+                )
+
             client = SensoWashClient(
                 ble_device,
                 notification_cb=self._on_notification,
                 pairing_key=self._pairing_key,
+                bleak_client_factory=_factory,
             )
             try:
                 await client.connect()
@@ -137,6 +157,12 @@ class SensoWashCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             WaterHardness,
             WaterTemperature,
         )
+
+        # Synthetic disconnect event from SensoWashClient._on_disconnect
+        if uuid == "disconnected":
+            _LOGGER.debug("%s: BLE connection dropped", self.device_name)
+            self._client = None
+            return
 
         if not data or self.data is None:
             return
