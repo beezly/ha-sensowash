@@ -164,6 +164,12 @@ class SensoWashCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             self._client = None
             return
 
+        # Serial protocol push event — toilet state changed
+        # op 0x53 = toilet state response (also sent as unsolicited event on state change)
+        if uuid == "serial:0x53":
+            self._handle_serial_state(data)
+            return
+
         if not data or self.data is None:
             return
 
@@ -229,6 +235,18 @@ class SensoWashCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                         self.device_name,
                         self.capabilities,
                     )
+                    # Serial devices with seat sensor: poll more frequently so
+                    # occupancy state stays current between push events
+                    if (
+                        client.protocol == "serial"
+                        and self.capabilities.seat_occupied_sensor
+                        and self.update_interval.seconds > 10
+                    ):
+                        self.update_interval = timedelta(seconds=10)
+                        _LOGGER.debug(
+                            "%s: reduced poll interval to 10s for serial occupancy",
+                            self.device_name,
+                        )
                 except Exception as exc:  # noqa: BLE001
                     _LOGGER.warning(
                         "Could not fetch capabilities from %s: %s — "
@@ -265,6 +283,34 @@ class SensoWashCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         except Exception as exc:  # noqa: BLE001
             _LOGGER.error("Command %s failed on %s: %s", method, self.device_name, exc)
             raise
+
+    def _handle_serial_state(self, data: bytes) -> None:
+        """Decode a serial toilet-state packet and push updated state to listeners.
+
+        Called both from unsolicited push events (op 0x53) and indirectly from
+        the periodic poll via get_full_state(). Merges into existing data so
+        GATT-sourced keys are not overwritten.
+        """
+        if not data or len(data) < 2 or self.data is None:
+            return
+
+        b0, b1 = data[0], data[1]
+        updates = {
+            "washing":            bool(b0 & 0x01),
+            "wash_initializing":  bool(b0 & 0x02),
+            "seated_wash":        bool(b0 & 0x04),
+            "wash_powered":       bool(b0 & 0x08),
+            "drying":             bool(b0 & 0x10),
+            "dry_initializing":   bool(b0 & 0x20),
+            "seated_dry":         bool(b0 & 0x40),
+            "dry_powered":        bool(b0 & 0x80),
+            "deodorizing":        bool(b1 & 0x02),
+            # Occupied = seated during wash OR seated during dry
+            "seated":             bool((b0 & 0x04) or (b0 & 0x40)),
+        }
+        self.data.update(updates)
+        self.async_set_updated_data(dict(self.data))
+        _LOGGER.debug("%s: serial state push → seated=%s", self.device_name, updates["seated"])
 
     def supports(self, capability: str) -> bool:
         """Return True if the toilet has this capability, or if capabilities are unknown."""
