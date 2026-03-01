@@ -98,7 +98,20 @@ is all that's required.
 
 ## Entities
 
-Entities are registered based on what the toilet actually supports — not all will appear on every model. Serial-protocol devices are write-only for some settings (no readback), so selects may show **unknown** until you set them.
+Entities are registered based on what the toilet actually supports — not all will appear on every model.
+
+> **Serial-protocol device limitations (Starck F Lite/Plus, i Lite/Plus):**
+> Several settings on serial-protocol models are **write-only** — the toilet accepts
+> commands but does not report the current value back over BLE. This affects:
+> night light, proximity sensitivity, deodorization delay, water flow, water
+> temperature, nozzle position, seat heating, and dryer temperature.
+>
+> As a result:
+> - These selects will show **unknown** after a fresh HA restart until you set them
+> - The last-set value is remembered across restarts (HA's state restore), but is
+>   lost if you clear HA storage or reinstall
+> - If you change a setting via the Duravit app while the integration is disabled,
+>   HA will not know about the change until you set it again from HA
 
 ### Binary Sensors
 | Entity | Description |
