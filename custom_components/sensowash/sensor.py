@@ -10,11 +10,11 @@ from homeassistant.components.sensor import (
     SensorEntityDescription,
     SensorStateClass,
 )
-from homeassistant.const import UnitOfTemperature
+from homeassistant.const import UnitOfTemperature, UnitOfTime
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from sensowash.models import ErrorCode
+from sensowash.models import DescalingState, ErrorCode
 
 from . import SensoWashConfigEntry
 from .coordinator import SensoWashCoordinator
@@ -71,6 +71,26 @@ SENSORS: tuple[SensoWashSensorDescription, ...] = (
         value_fn=_error_state,
         attributes_fn=_error_attrs,
         capability="error_codes",
+    ),
+    SensoWashSensorDescription(
+        key="descaling_status",
+        translation_key="descaling_status",
+        icon="mdi:water-sync",
+        value_fn=lambda d: (
+            d["descaling_state"].status.name.lower()
+            if isinstance(d.get("descaling_state"), DescalingState)
+            else None
+        ),
+        capability="descaling",
+    ),
+    SensoWashSensorDescription(
+        key="descaling_remaining_time",
+        translation_key="descaling_remaining_time",
+        icon="mdi:timer-sand",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=UnitOfTime.MINUTES,
+        value_fn=lambda d: d.get("descaling_remaining_time"),
+        capability="descaling",
     ),
 )
 

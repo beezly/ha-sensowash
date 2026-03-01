@@ -269,6 +269,28 @@ class SensoWashCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
             state = await client.get_full_state()
             state["device_info"] = await client.get_device_info()
+
+            # Augment with fields not in get_full_state()
+            caps = self.capabilities
+            try:
+                if caps is None or caps.descaling:
+                    state["descaling_state"] = await client.get_descaling_state()
+                    state["descaling_remaining_time"] = await client.get_descaling_remaining_time()
+            except Exception as exc:  # noqa: BLE001
+                _LOGGER.debug("%s: could not poll descaling state: %s", self.device_name, exc)
+
+            try:
+                if caps is None or caps.ambient_light:
+                    state["night_light"] = await client.get_night_light()
+            except Exception as exc:  # noqa: BLE001
+                _LOGGER.debug("%s: could not poll night light: %s", self.device_name, exc)
+
+            try:
+                if caps is None or caps.proximity_detection:
+                    state["proximity_detection"] = await client.get_proximity_detection()
+            except Exception as exc:  # noqa: BLE001
+                _LOGGER.debug("%s: could not poll proximity detection: %s", self.device_name, exc)
+
             return state
 
         except UpdateFailed:

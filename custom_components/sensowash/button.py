@@ -12,6 +12,7 @@ from sensowash.models import (
     DryerSpeed,
     DryerTemperature,
     NozzlePosition,
+    TankDrainage,
     WaterFlow,
     WaterTemperature,
 )
@@ -101,6 +102,49 @@ BUTTONS: tuple[SensoWashButtonDescription, ...] = (
         icon="mdi:hair-dryer-outline",
         method="stop_dryer",
         capability="dryer",
+    ),
+    SensoWashButtonDescription(
+        key="eco_flush",
+        translation_key="eco_flush",
+        icon="mdi:water-minus",
+        method="eco_flush",
+        capability="flush",
+    ),
+    SensoWashButtonDescription(
+        key="start_descaling",
+        translation_key="start_descaling",
+        icon="mdi:water-sync",
+        method="start_descaling",
+        capability="descaling",
+    ),
+    SensoWashButtonDescription(
+        key="nozzle_self_clean",
+        translation_key="nozzle_self_clean",
+        icon="mdi:spray",
+        method="nozzle_self_clean",
+        capability=None,
+    ),
+    SensoWashButtonDescription(
+        key="nozzle_manual_clean",
+        translation_key="nozzle_manual_clean",
+        icon="mdi:spray-bottle",
+        method="nozzle_manual_clean",
+        capability=None,
+    ),
+    SensoWashButtonDescription(
+        key="drain_tank",
+        translation_key="drain_tank",
+        icon="mdi:water-pump",
+        method="drain_tank",
+        kwargs={"drainage": TankDrainage.EN_1717},
+        capability=None,
+    ),
+    SensoWashButtonDescription(
+        key="factory_reset",
+        translation_key="factory_reset",
+        icon="mdi:restore-alert",
+        method="factory_reset",
+        capability=None,
     ),
 )
 

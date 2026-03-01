@@ -64,7 +64,16 @@
         "state": {
           "ok": "OK"
         }
-      }
+      },
+      "descaling_status": {
+        "name": "Descaling status",
+        "state": {
+          "idle":        "Idle",
+          "in_progress": "In progress",
+          "paused":      "Paused"
+        }
+      },
+      "descaling_remaining_time": { "name": "Descaling time remaining" }
     },
     "switch": {
       "ambient_light":       { "name": "Ambient light" },
@@ -140,17 +149,47 @@
           "medium_hard": "Medium-hard",
           "hard":        "Hard"
         }
+      },
+      "proximity_detection": {
+        "name": "Proximity sensitivity",
+        "state": {
+          "near":   "Near",
+          "medium": "Medium",
+          "far":    "Far"
+        }
+      },
+      "night_light": {
+        "name": "Night light",
+        "state": {
+          "off":  "Off",
+          "on":   "On",
+          "auto": "Auto"
+        }
+      },
+      "deodorization_delay": {
+        "name": "Deodorization delay",
+        "state": {
+          "off":   "Off (immediate)",
+          "short": "Short",
+          "long":  "Long"
+        }
       }
     },
     "button": {
-      "start_rear_wash": { "name": "Start rear wash" },
-      "start_lady_wash": { "name": "Start lady wash" },
-      "stop":            { "name": "Stop" },
-      "flush":           { "name": "Flush" },
-      "open_lid":        { "name": "Open lid" },
-      "close_lid":       { "name": "Close lid" },
-      "start_dryer":     { "name": "Start dryer" },
-      "stop_dryer":      { "name": "Stop dryer" }
+      "start_rear_wash":    { "name": "Start rear wash" },
+      "start_lady_wash":    { "name": "Start lady wash" },
+      "stop":               { "name": "Stop" },
+      "flush":              { "name": "Flush" },
+      "eco_flush":          { "name": "Eco flush" },
+      "open_lid":           { "name": "Open lid" },
+      "close_lid":          { "name": "Close lid" },
+      "start_dryer":        { "name": "Start dryer" },
+      "stop_dryer":         { "name": "Stop dryer" },
+      "start_descaling":    { "name": "Start descaling" },
+      "nozzle_self_clean":  { "name": "Nozzle self-clean" },
+      "nozzle_manual_clean":{ "name": "Extend nozzle for cleaning" },
+      "drain_tank":         { "name": "Drain tank" },
+      "factory_reset":      { "name": "Factory reset" }
     }
   }
 }

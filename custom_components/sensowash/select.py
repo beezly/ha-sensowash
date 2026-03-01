@@ -13,9 +13,12 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.restore_state import RestoreEntity
 
 from sensowash.models import (
+    DeodorizationDelay,
     DryerSpeed,
     DryerTemperature,
+    LightState,
     NozzlePosition,
+    ProximityState,
     SeatTemperature,
     WaterFlow,
     WaterHardness,
@@ -60,6 +63,9 @@ _DS_FWD, _DS_REV = _build(DryerSpeed, ["normal", "turbo"])
 _WH_FWD, _WH_REV = _build(
     WaterHardness, ["soft", "medium_soft", "medium", "medium_hard", "hard"]
 )
+_PROX_FWD, _PROX_REV = _build(ProximityState, ["near", "medium", "far"])
+_LIGHT_FWD, _LIGHT_REV = _build(LightState, ["off", "on", "auto"])
+_DEOD_DELAY_FWD, _DEOD_DELAY_REV = _build(DeodorizationDelay, ["off", "short", "long"])
 
 
 SELECTS: tuple[SensoWashSelectDescription, ...] = (
@@ -139,6 +145,39 @@ SELECTS: tuple[SensoWashSelectDescription, ...] = (
         options_map=_WH_FWD,
         reverse_map=_WH_REV,
         capability="water_hardness",
+    ),
+    SensoWashSelectDescription(
+        key="proximity_detection",
+        translation_key="proximity_detection",
+        icon="mdi:motion-sensor",
+        state_key="proximity_detection",
+        set_method="set_proximity_detection",
+        options=list(_PROX_FWD),
+        options_map=_PROX_FWD,
+        reverse_map=_PROX_REV,
+        capability="proximity_detection",
+    ),
+    SensoWashSelectDescription(
+        key="night_light",
+        translation_key="night_light",
+        icon="mdi:lightbulb-night",
+        state_key="night_light",
+        set_method="set_night_light",
+        options=list(_LIGHT_FWD),
+        options_map=_LIGHT_FWD,
+        reverse_map=_LIGHT_REV,
+        capability="ambient_light",
+    ),
+    SensoWashSelectDescription(
+        key="deodorization_delay",
+        translation_key="deodorization_delay",
+        icon="mdi:air-filter",
+        state_key="deodorization_delay",
+        set_method="set_deodorization_delay",
+        options=list(_DEOD_DELAY_FWD),
+        options_map=_DEOD_DELAY_FWD,
+        reverse_map=_DEOD_DELAY_REV,
+        capability="deodorization",
     ),
 )
 
