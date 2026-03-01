@@ -171,6 +171,22 @@ Entities are registered based on what the toilet actually supports — not all w
 
 ---
 
+## Compatibility with the Duravit App
+
+The SensoWash maintains a single active Bluetooth connection at a time. While this
+integration is connected, **the official Duravit app will not be able to connect to
+the toilet**.
+
+If you need to use the app temporarily (e.g. for firmware updates or features not yet
+exposed by this integration), disable the integration first:
+
+**Settings → Devices & Services → SensoWash → (three dots) → Disable**
+
+This immediately drops the BLE connection without requiring a restart. Re-enable it
+when you're done and the integration will reconnect automatically.
+
+---
+
 ## Pairing
 
 Older serial-protocol models (Starck F Plus/Lite, i Plus/Lite) advertise as `DURAVIT_BT`
