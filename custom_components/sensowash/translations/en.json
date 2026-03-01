@@ -54,7 +54,7 @@
       "wash_active": { "name": "Wash active" },
       "dryer_active": { "name": "Dryer active" },
       "lid_open":     { "name": "Lid" },
-      "seated":       { "name": "Occupied" },
+      "seated":       { "name": "Seat occupied" },
       "deodorizing":  { "name": "Deodorizing" }
     },
     "sensor": {

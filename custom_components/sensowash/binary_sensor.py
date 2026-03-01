@@ -54,14 +54,10 @@ BINARY_SENSORS: tuple[SensoWashBinarySensorDescription, ...] = (
         key="seated",
         translation_key="seated",
         device_class=BinarySensorDeviceClass.OCCUPANCY,
-        value_fn=lambda d: (
-            # Serial: comes from state dict "seated" key
-            d.get("seated")
-            # GATT: seat_state characteristic
-            if "seated" in d
-            else d.get("seat_state") == OnOff.ON
-        ),
-        capability="proximity_detection",
+        # Serial protocol only — reads bitmask bits from toilet state response.
+        # Not available on GATT devices (no live occupancy characteristic exists).
+        value_fn=lambda d: bool(d.get("seated")),
+        capability="seat_occupied_sensor",
     ),
     SensoWashBinarySensorDescription(
         key="deodorizing",
