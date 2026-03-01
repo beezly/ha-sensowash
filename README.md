@@ -100,13 +100,15 @@ is all that's required.
 
 ## Entities
 
+Entities are registered based on what the toilet actually supports — not all will appear on every model.
+
 ### Binary Sensors
 | Entity | Description |
 |---|---|
 | **Wash active** | True while a wash cycle is running |
 | **Dryer active** | True while the dryer is running |
 | **Lid** | Open / Closed |
-| **Occupied** | True when someone is seated (proximity sensor) |
+| **Seat occupied** | True when someone is seated (serial protocol only — derived from toilet state) |
 | **Deodorizing** | True while deodorizer is running |
 
 ### Sensors
@@ -114,18 +116,18 @@ is all that's required.
 |---|---|
 | **Seat temperature** | Measured seat surface temperature (°C) |
 | **Status** | `ok` or active error code list; attributes contain full error detail |
+| **Descaling status** | `idle` / `in_progress` / `paused` |
+| **Descaling time remaining** | Minutes remaining in current descaling cycle (serial only) |
 
 ### Switches
 | Entity | Description |
 |---|---|
-| **Ambient light** | Night/ambient LED |
 | **HygieneUV light** | UVC disinfection light |
 | **HygieneUV automatic** | Automatic UVC cycle after each use |
 | **Deodorization** | Deodorizer on/off |
 | **Automatic deodorization** | Auto-trigger after use |
 | **Automatic flush** | Auto-flush on seat exit |
 | **Pre-flush** | Pre-flush before use |
-| **Proximity sensor** | Presence detection |
 | **Mute** | Silence beep tones |
 | **Automatic seat** | Auto lower the seat |
 
@@ -139,18 +141,27 @@ is all that's required.
 | **Dryer temperature** | Off / Warm / Warmer / Hot |
 | **Dryer speed** | Normal / Turbo |
 | **Water hardness** | Soft / Medium-soft / Medium / Medium-hard / Hard |
+| **Night light** | Off / On / Auto |
+| **Proximity sensitivity** | Near / Medium / Far |
+| **Deodorization delay** | Off (immediate) / Short / Long |
 
 ### Buttons
-| Entity | Action |
-|---|---|
-| **Start rear wash** | Starts rear wash with current settings |
-| **Start lady wash** | Starts lady wash with current settings |
-| **Stop** | Stops any active function |
-| **Flush** | Manual flush |
-| **Open lid** | Opens the lid |
-| **Close lid** | Closes the lid |
-| **Start dryer** | Starts the dryer |
-| **Stop dryer** | Stops the dryer |
+| Entity | Action | Protocol |
+|---|---|---|
+| **Start rear wash** | Starts rear wash with current settings | Both |
+| **Start lady wash** | Starts lady wash with current settings | Both |
+| **Stop** | Stops any active function | Both |
+| **Flush** | Full manual flush | Both |
+| **Eco flush** | Reduced-water flush | Serial |
+| **Open lid** | Opens the lid | Both |
+| **Close lid** | Closes the lid | Both |
+| **Start dryer** | Starts the dryer | Both |
+| **Stop dryer** | Stops the dryer | Both |
+| **Start descaling** | Triggers a descaling cycle | Serial |
+| **Nozzle self-clean** | Automatic nozzle cleaning cycle | Serial |
+| **Extend nozzle for cleaning** | Extends nozzle for manual cleaning | Serial |
+| **Drain tank** | Drains internal tank (EN 1717 / BS EN 1717) | Serial |
+| **Factory reset** | Restores factory defaults ⚠️ | Serial |
 
 ---
 
@@ -174,22 +185,26 @@ automation:
 ### Nighttime ambient light
 ```yaml
 automation:
-  - alias: "Toilet: ambient light on at night"
+  - alias: "Toilet: night light auto mode at night"
     trigger:
       - platform: time
         at: "22:00:00"
     action:
-      - service: switch.turn_on
+      - service: select.select_option
         target:
-          entity_id: switch.sensowash_ambient_light
-  - alias: "Toilet: ambient light off in morning"
+          entity_id: select.sensowash_night_light
+        data:
+          option: auto
+  - alias: "Toilet: night light off in morning"
     trigger:
       - platform: time
         at: "07:00:00"
     action:
-      - service: switch.turn_off
+      - service: select.select_option
         target:
-          entity_id: switch.sensowash_ambient_light
+          entity_id: select.sensowash_night_light
+        data:
+          option: "off"
 ```
 
 ### Alert on fault
