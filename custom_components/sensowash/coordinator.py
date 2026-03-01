@@ -164,10 +164,22 @@ class SensoWashCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             self._client = None
             return
 
-        # Serial protocol push event — toilet state changed
-        # op 0x53 = toilet state response (also sent as unsolicited event on state change)
-        if uuid == "serial:0x53":
-            self._handle_serial_state(data)
+        # Serial protocol push events
+        if uuid.startswith("serial:"):
+            if uuid == "serial:0x53":
+                # Toilet state — decode and push to entities
+                self._handle_serial_state(data)
+            else:
+                # Unknown/unhandled serial event — log so we can learn the protocol.
+                # Enable debug logging for this integration to capture these.
+                _LOGGER.debug(
+                    "%s: unhandled serial event %s payload=%s (%d bytes) "
+                    "— please report this at https://github.com/beezly/ha-sensowash/issues",
+                    self.device_name,
+                    uuid,
+                    data.hex(),
+                    len(data),
+                )
             return
 
         if not data or self.data is None:
