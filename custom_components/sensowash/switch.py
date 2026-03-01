@@ -30,17 +30,6 @@ class SensoWashSwitchDescription(SwitchEntityDescription):
 
 SWITCHES: tuple[SensoWashSwitchDescription, ...] = (
     SensoWashSwitchDescription(
-        key="ambient_light",
-        translation_key="ambient_light",
-        icon="mdi:lightbulb-outline",
-        state_key="ambient_light",
-        turn_on_method="set_ambient_light",
-        turn_off_method="set_ambient_light",
-        turn_on_kwargs={"enabled": True},
-        turn_off_kwargs={"enabled": False},
-        capability="ambient_light",
-    ),
-    SensoWashSwitchDescription(
         key="uvc_light",
         translation_key="uvc_light",
         icon="mdi:radioactive",
@@ -105,17 +94,6 @@ SWITCHES: tuple[SensoWashSwitchDescription, ...] = (
         turn_on_kwargs={"enabled": True},
         turn_off_kwargs={"enabled": False},
         capability="pre_flush",
-    ),
-    SensoWashSwitchDescription(
-        key="proximity_detection",
-        translation_key="proximity_detection",
-        icon="mdi:motion-sensor",
-        state_key="seat_proximity",
-        turn_on_method="set_proximity_detection",
-        turn_off_method="set_proximity_detection",
-        turn_on_kwargs={"enabled": True},
-        turn_off_kwargs={"enabled": False},
-        capability="proximity_detection",
     ),
     SensoWashSwitchDescription(
         key="mute",

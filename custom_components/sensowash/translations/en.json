@@ -76,14 +76,12 @@
       "descaling_remaining_time": { "name": "Descaling time remaining" }
     },
     "switch": {
-      "ambient_light":       { "name": "Ambient light" },
       "uvc_light":           { "name": "HygieneUV light" },
       "uvc_auto":            { "name": "HygieneUV automatic" },
       "deodorization":       { "name": "Deodorization" },
       "deodorization_auto":  { "name": "Automatic deodorization" },
       "auto_flush":          { "name": "Automatic flush" },
       "pre_flush":           { "name": "Pre-flush" },
-      "proximity_detection": { "name": "Proximity sensor" },
       "mute":                { "name": "Mute" },
       "seat_auto":           { "name": "Automatic seat" }
     },
