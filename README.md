@@ -24,12 +24,8 @@ Uses the [sensowash-ble](https://github.com/beezly/sensowash-ble) Python library
 | SensoWash i Plus / i Lite (serial) | `DURAVIT_BT` |
 | DuraSystem | `DuraSystem` |
 
-> **Serial-protocol models** (Starck F Plus/Lite, i Plus/Lite — China/USA/Asia variants)
-> require a one-time pairing key. After adding the integration, go to
-> **Settings → Devices & Services → SensoWash → Configure** and enter the key.
-> If you don't have one yet, use the `pair.py` script in
-> [sensowash-ble](https://github.com/beezly/sensowash-ble) while pressing the
-> Bluetooth button on the toilet.
+> **Serial-protocol models** (Starck F Plus/Lite, i Plus/Lite) require a one-time pairing
+> step the first time you add the integration. See [Pairing](#pairing) below.
 
 ---
 
@@ -162,6 +158,36 @@ Entities are registered based on what the toilet actually supports — not all w
 | **Extend nozzle for cleaning** | Extends nozzle for manual cleaning | Serial |
 | **Drain tank** | Drains internal tank (EN 1717 / BS EN 1717) | Serial |
 | **Factory reset** | Restores factory defaults ⚠️ | Serial |
+
+---
+
+## Pairing
+
+Older serial-protocol models (Starck F Plus/Lite, i Plus/Lite) advertise as `DURAVIT_BT`
+and require a one-time Bluetooth pairing handshake before they'll accept commands.
+
+### How it works
+
+When the integration detects a serial-protocol toilet during setup, it automatically
+starts the pairing process. At that point the toilet's Bluetooth indicator will
+**slow-flash blue** — this means it's waiting for you to confirm pairing.
+
+**Press the Bluetooth button on the toilet** (usually on the side panel, marked with the
+Bluetooth symbol). The indicator will stop flashing and the pairing will complete.
+
+The pairing key is saved automatically — you won't need to do this again unless you
+factory reset the toilet or reinstall the integration.
+
+### Troubleshooting
+
+- **LED not flashing?** Make sure Bluetooth is enabled on the toilet (check the app or
+  side panel switch). The toilet must be powered on and within BLE range.
+- **Timed out?** The pairing screen has a countdown. If it expires before you press the
+  button, you can retry from the next screen.
+- **Already paired to another device?** The toilet can only be paired to one controller
+  at a time. If it was previously paired via the Duravit app, you may need to reset
+  the Bluetooth pairing on the toilet first (hold the Bluetooth button for ~10 seconds
+  until the LED flashes rapidly).
 
 ---
 
