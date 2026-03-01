@@ -254,4 +254,8 @@ class SensoWashSelect(SensoWashEntity, SelectEntity, RestoreEntity):
         await self.coordinator.async_command(
             self.entity_description.set_method, enum_val
         )
+        # Optimistically write the value into coordinator data so it survives
+        # the next poll (write-only serial selects are not returned by get_full_state)
+        if self.coordinator.data is not None:
+            self.coordinator.data[self.entity_description.state_key] = enum_val
         await self.coordinator.async_request_refresh()
