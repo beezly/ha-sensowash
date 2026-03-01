@@ -194,7 +194,7 @@ class SensoWashConfigFlow(ConfigFlow, domain=DOMAIN):
 
     async def _do_pair(self, address: str) -> bytes:
         """Run the BLE pairing handshake in the background."""
-        from sensowash.serial import pair as serial_pair
+        from .lib.serial import pair as serial_pair
         return await serial_pair(address, timeout=_PAIR_TIMEOUT)
 
     # ── Manual setup ───────────────────────────────────────────────────────────
