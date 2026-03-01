@@ -281,13 +281,17 @@ class SensoWashCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
             try:
                 if caps is None or caps.ambient_light:
-                    state["night_light"] = await client.get_night_light()
+                    nl = await client.get_night_light()
+                    if nl is not None:
+                        state["night_light"] = nl
             except Exception as exc:  # noqa: BLE001
                 _LOGGER.debug("%s: could not poll night light: %s", self.device_name, exc)
 
             try:
                 if caps is None or caps.proximity_detection:
-                    state["proximity_detection"] = await client.get_proximity_detection()
+                    pd = await client.get_proximity_detection()
+                    if pd is not None:
+                        state["proximity_detection"] = pd
             except Exception as exc:  # noqa: BLE001
                 _LOGGER.debug("%s: could not poll proximity detection: %s", self.device_name, exc)
 
