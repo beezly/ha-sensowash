@@ -20,19 +20,53 @@ Uses the [sensowash-ble](https://github.com/beezly/sensowash-ble) Python library
 | SensoWash U | `SensoWash u` |
 | SensoWash Starck F Pro | `SensoWash s` |
 | SensoWash i Pro | `SensoWash i` |
+| SensoWash Starck F Plus / Starck F Lite (serial) | `DURAVIT_BT` |
+| SensoWash i Plus / i Lite (serial) | `DURAVIT_BT` |
 | DuraSystem | `DuraSystem` |
 
-> Older serial-protocol models (Starck Plus/Lite, i Plus/Lite for China/USA) are not
-> currently supported.
+> **Serial-protocol models** (Starck F Plus/Lite, i Plus/Lite — China/USA/Asia variants)
+> require a one-time pairing key. After adding the integration, go to
+> **Settings → Devices & Services → SensoWash → Configure** and enter the key.
+> If you don't have one yet, use the `pair.py` script in
+> [sensowash-ble](https://github.com/beezly/sensowash-ble) while pressing the
+> Bluetooth button on the toilet.
 
 ---
 
-## Installation via HACS
+## Installation
 
-1. In HACS → **Integrations** → ⋮ → **Custom repositories**
-2. Add `https://github.com/beezly/ha-sensowash` as category **Integration**
-3. Install **Duravit SensoWash**
-4. Restart Home Assistant
+### Via HACS (recommended)
+
+This integration is not yet in the default HACS store, so you need to add it as a
+**custom repository** first.
+
+#### Step 1 — Add the custom repository
+
+**Option A — one-click (HACS 2.x+):**
+
+[![Add to HACS](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=beezly&repository=ha-sensowash&category=integration)
+
+**Option B — manually:**
+
+1. Open HACS in your Home Assistant sidebar
+2. Click **⋮ (three dots)** → **Custom repositories**
+3. Enter `https://github.com/beezly/ha-sensowash` in the URL field
+4. Select **Integration** as the category
+5. Click **Add**
+
+#### Step 2 — Install
+
+1. Search for **SensoWash** in HACS → Integrations
+2. Click **Download** and confirm
+3. **Restart Home Assistant**
+
+#### Step 3 — Configure
+
+After restarting, HA will discover your toilet automatically if it's advertising via
+Bluetooth. Accept the prompt in **Settings → Notifications**, or go to
+**Settings → Devices & Services → Add Integration → SensoWash**.
+
+---
 
 ### Manual installation
 
