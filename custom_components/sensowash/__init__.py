@@ -10,6 +10,7 @@ from homeassistant.core import HomeAssistant
 
 from .const import DOMAIN
 from .coordinator import SensoWashCoordinator
+from .services import async_setup_services, async_unload_services
 
 if TYPE_CHECKING:
     pass
@@ -41,6 +42,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: SensoWashConfigEntry) ->
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     entry.async_on_unload(entry.add_update_listener(_async_update_listener))
+
+    await async_setup_services(hass)
     return True
 
 
@@ -48,6 +51,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: SensoWashConfigEntry) -
     """Unload a config entry."""
     if unload_ok := await hass.config_entries.async_unload_platforms(entry, PLATFORMS):
         await entry.runtime_data.async_disconnect()
+        await async_unload_services(hass)
     return unload_ok
 
 

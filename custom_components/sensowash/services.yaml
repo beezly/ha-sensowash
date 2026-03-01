@@ -1,0 +1,99 @@
+set_seat_heating_schedule:
+  name: Set seat heating schedule
+  description: >
+    Programs the toilet's seat heating schedule. The toilet runs this autonomously
+    without needing a BLE connection once set.
+  fields:
+    config_entry_id:
+      name: Config entry ID
+      description: The config entry ID for the SensoWash integration instance.
+      required: true
+      selector:
+        config_entry:
+          integration: sensowash
+    enabled:
+      name: Enabled
+      description: Whether the schedule is active.
+      default: true
+      selector:
+        boolean:
+    temperature:
+      name: Temperature
+      description: "Seat heating level: 0=Off, 1=Warm, 2=Warmer, 3=Hot"
+      default: 1
+      selector:
+        number:
+          min: 0
+          max: 3
+          mode: slider
+    windows:
+      name: Schedule windows
+      description: >
+        List of time windows. Each window has from_hour, from_minute, to_hour,
+        to_minute, and days (list of 1=Mon … 7=Sun).
+      example: |
+        - from_hour: 6
+          from_minute: 30
+          to_hour: 8
+          to_minute: 0
+          days: [1, 2, 3, 4, 5]
+      selector:
+        object:
+
+get_seat_heating_schedule:
+  name: Get seat heating schedule
+  description: >
+    Reads the current seat heating schedule from the toilet and logs it.
+    Check the HA log for the result.
+  fields:
+    config_entry_id:
+      name: Config entry ID
+      required: true
+      selector:
+        config_entry:
+          integration: sensowash
+
+clear_seat_heating_schedule:
+  name: Clear seat heating schedule
+  description: Removes all seat heating schedule windows from the toilet.
+  fields:
+    config_entry_id:
+      name: Config entry ID
+      required: true
+      selector:
+        config_entry:
+          integration: sensowash
+
+set_uvc_schedule:
+  name: Set UVC disinfection schedule
+  description: >
+    Programs the UVC/HygieneUV light schedule. Each trigger fires a 20-minute
+    disinfection cycle daily at the given time.
+  fields:
+    config_entry_id:
+      name: Config entry ID
+      required: true
+      selector:
+        config_entry:
+          integration: sensowash
+    triggers:
+      name: Trigger times
+      description: List of {hour, minute} times to run the UVC cycle daily.
+      example: |
+        - hour: 2
+          minute: 0
+        - hour: 4
+          minute: 0
+      selector:
+        object:
+
+set_uvc_schedule_default:
+  name: Reset UVC schedule to default
+  description: Restores the UVC schedule to the factory default (02:00 and 03:00 daily).
+  fields:
+    config_entry_id:
+      name: Config entry ID
+      required: true
+      selector:
+        config_entry:
+          integration: sensowash
