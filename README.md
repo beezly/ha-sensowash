@@ -5,8 +5,10 @@
 Home Assistant integration for **Duravit SensoWash** smart toilets.
 
 Connects over Bluetooth Low Energy — works with direct BLE adapters **and**
-[Home Assistant Bluetooth proxies](https://esphome.io/components/bluetooth_proxy.html)
-(ESPHome, etc.), so you don't need a Bluetooth dongle on your HA server.
+[ESPHome Bluetooth proxies](https://esphome.io/components/bluetooth_proxy.html).
+This means **your Home Assistant server doesn't need to be within Bluetooth range of
+your toilet** — a cheap ESP32 board placed nearby is all you need.
+See [Bluetooth Proxy Setup](#bluetooth-proxy-setup-esphome) for a minimal ESPHome config.
 
 Uses the [sensowash-ble](https://github.com/beezly/sensowash-ble) Python library.
 
