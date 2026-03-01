@@ -3,14 +3,12 @@
 DOMAIN = "sensowash"
 MANUFACTURER = "Duravit"
 
-# Config entry keys
-CONF_ADDRESS = "address"
-CONF_NAME = "name"
+# Config / options entry keys
+CONF_PAIRING_KEY = "pairing_key"  # hex string, for serial-protocol devices
 
 # Coordinator update interval (seconds) — state is primarily push via BLE notify,
 # but we poll periodically as a fallback.
 UPDATE_INTERVAL = 30
 
-# Entry data keys
-ENTRY_COORDINATOR = "coordinator"
-ENTRY_CLIENT = "client"
+# hass.data key for storing coordinator capabilities between restarts
+CONF_CAPABILITIES = "capabilities"

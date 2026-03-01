@@ -1,7 +1,7 @@
 {
   "domain": "sensowash",
   "name": "Duravit SensoWash",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "documentation": "https://github.com/beezly/ha-sensowash",
   "issue_tracker": "https://github.com/beezly/ha-sensowash/issues",
   "codeowners": ["@beezly"],
@@ -11,12 +11,12 @@
     {"local_name": "SensoWash u*"},
     {"local_name": "SensoWash s*"},
     {"local_name": "SensoWash i*"},
-    {"local_name": "DuraSystem*"}
+    {"local_name": "DuraSystem*"},
+    {"local_name": "DURAVIT_BT*"}
   ],
   "dependencies": ["bluetooth"],
   "requirements": [
-    "sensowash-ble @ git+https://github.com/beezly/sensowash-ble.git@master",
-    "bleak-retry-connector>=3.4.0"
+    "sensowash-ble @ git+https://github.com/beezly/sensowash-ble.git@master"
   ],
   "config_flow": true
 }

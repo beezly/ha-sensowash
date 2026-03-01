@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Callable, Any
+from typing import Any, Callable
 
 from homeassistant.components.sensor import (
     SensorDeviceClass,
@@ -10,23 +10,25 @@ from homeassistant.components.sensor import (
     SensorEntityDescription,
     SensorStateClass,
 )
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import UnitOfTemperature
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from sensowash.models import ErrorCode
 
-from .const import DOMAIN, ENTRY_COORDINATOR
+from . import SensoWashConfigEntry
 from .coordinator import SensoWashCoordinator
 from .entity import SensoWashEntity
 
 
 @dataclass(frozen=True, kw_only=True)
 class SensoWashSensorDescription(SensorEntityDescription):
+    """Extends SensorEntityDescription with value/attributes callbacks and capability guard."""
+
     value_fn: Callable[[dict[str, Any]], Any]
-    # Optional: function to produce extra state attributes
     attributes_fn: Callable[[dict[str, Any]], dict] | None = None
+    # capability name on DeviceCapabilities; None = always show
+    capability: str | None = None
 
 
 def _error_state(data: dict) -> str:
@@ -60,29 +62,35 @@ SENSORS: tuple[SensoWashSensorDescription, ...] = (
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         value_fn=lambda d: d.get("seat_actual_temp"),
+        capability="actual_seat_temperature",
     ),
     SensoWashSensorDescription(
         key="error_status",
         translation_key="error_status",
+        icon="mdi:alert-circle-outline",
         value_fn=_error_state,
         attributes_fn=_error_attrs,
-        icon="mdi:alert-circle-outline",
+        capability="error_codes",
     ),
 )
 
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    entry: ConfigEntry,
+    entry: SensoWashConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
-    coordinator: SensoWashCoordinator = hass.data[DOMAIN][entry.entry_id][ENTRY_COORDINATOR]
+    coordinator = entry.runtime_data
     async_add_entities(
-        SensoWashSensor(coordinator, description) for description in SENSORS
+        SensoWashSensor(coordinator, description)
+        for description in SENSORS
+        if description.capability is None or coordinator.supports(description.capability)
     )
 
 
 class SensoWashSensor(SensoWashEntity, SensorEntity):
+    """A sensor entity for SensoWash."""
+
     entity_description: SensoWashSensorDescription
 
     def __init__(

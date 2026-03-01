@@ -2,27 +2,30 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Callable
+from typing import Any
 
 from homeassistant.components.switch import SwitchEntity, SwitchEntityDescription
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from sensowash.models import OnOff
 
-from .const import DOMAIN, ENTRY_COORDINATOR
+from . import SensoWashConfigEntry
 from .coordinator import SensoWashCoordinator
 from .entity import SensoWashEntity
 
 
 @dataclass(frozen=True, kw_only=True)
 class SensoWashSwitchDescription(SwitchEntityDescription):
+    """Extends SwitchEntityDescription with state key, command methods, and capability guard."""
+
     state_key: str
     turn_on_method: str
     turn_off_method: str
     turn_on_kwargs: dict[str, Any] | None = None
     turn_off_kwargs: dict[str, Any] | None = None
+    # capability name on DeviceCapabilities; None = always show
+    capability: str | None = None
 
 
 SWITCHES: tuple[SensoWashSwitchDescription, ...] = (
@@ -35,26 +38,29 @@ SWITCHES: tuple[SensoWashSwitchDescription, ...] = (
         turn_off_method="set_ambient_light",
         turn_on_kwargs={"enabled": True},
         turn_off_kwargs={"enabled": False},
+        capability="ambient_light",
     ),
     SensoWashSwitchDescription(
         key="uvc_light",
         translation_key="uvc_light",
-        icon="mdi:uv",
+        icon="mdi:radioactive",
         state_key="uvc_light",
         turn_on_method="set_uvc_light",
         turn_off_method="set_uvc_light",
         turn_on_kwargs={"enabled": True},
         turn_off_kwargs={"enabled": False},
+        capability="uvc_light",
     ),
     SensoWashSwitchDescription(
         key="uvc_auto",
         translation_key="uvc_auto",
-        icon="mdi:uv",
+        icon="mdi:radioactive",
         state_key="uvc_auto",
         turn_on_method="set_uvc_auto",
         turn_off_method="set_uvc_auto",
         turn_on_kwargs={"enabled": True},
         turn_off_kwargs={"enabled": False},
+        capability="uvc_auto",
     ),
     SensoWashSwitchDescription(
         key="deodorization",
@@ -65,6 +71,7 @@ SWITCHES: tuple[SensoWashSwitchDescription, ...] = (
         turn_off_method="set_deodorization",
         turn_on_kwargs={"enabled": True},
         turn_off_kwargs={"enabled": False},
+        capability="deodorization",
     ),
     SensoWashSwitchDescription(
         key="deodorization_auto",
@@ -75,6 +82,7 @@ SWITCHES: tuple[SensoWashSwitchDescription, ...] = (
         turn_off_method="set_deodorization_auto",
         turn_on_kwargs={"enabled": True},
         turn_off_kwargs={"enabled": False},
+        capability="deodorization_auto",
     ),
     SensoWashSwitchDescription(
         key="auto_flush",
@@ -85,6 +93,7 @@ SWITCHES: tuple[SensoWashSwitchDescription, ...] = (
         turn_off_method="set_auto_flush",
         turn_on_kwargs={"enabled": True},
         turn_off_kwargs={"enabled": False},
+        capability="auto_flush",
     ),
     SensoWashSwitchDescription(
         key="pre_flush",
@@ -95,6 +104,7 @@ SWITCHES: tuple[SensoWashSwitchDescription, ...] = (
         turn_off_method="set_pre_flush",
         turn_on_kwargs={"enabled": True},
         turn_off_kwargs={"enabled": False},
+        capability="pre_flush",
     ),
     SensoWashSwitchDescription(
         key="proximity_detection",
@@ -105,6 +115,7 @@ SWITCHES: tuple[SensoWashSwitchDescription, ...] = (
         turn_off_method="set_proximity_detection",
         turn_on_kwargs={"enabled": True},
         turn_off_kwargs={"enabled": False},
+        capability="proximity_detection",
     ),
     SensoWashSwitchDescription(
         key="mute",
@@ -115,6 +126,7 @@ SWITCHES: tuple[SensoWashSwitchDescription, ...] = (
         turn_off_method="set_mute",
         turn_on_kwargs={"muted": True},
         turn_off_kwargs={"muted": False},
+        capability="mute",
     ),
     SensoWashSwitchDescription(
         key="seat_auto",
@@ -125,22 +137,27 @@ SWITCHES: tuple[SensoWashSwitchDescription, ...] = (
         turn_off_method="set_seat_auto",
         turn_on_kwargs={"enabled": True},
         turn_off_kwargs={"enabled": False},
+        capability="seat_auto",
     ),
 )
 
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    entry: ConfigEntry,
+    entry: SensoWashConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
-    coordinator: SensoWashCoordinator = hass.data[DOMAIN][entry.entry_id][ENTRY_COORDINATOR]
+    coordinator = entry.runtime_data
     async_add_entities(
-        SensoWashSwitch(coordinator, description) for description in SWITCHES
+        SensoWashSwitch(coordinator, description)
+        for description in SWITCHES
+        if description.capability is None or coordinator.supports(description.capability)
     )
 
 
 class SensoWashSwitch(SensoWashEntity, SwitchEntity):
+    """A switch entity for SensoWash."""
+
     entity_description: SensoWashSwitchDescription
 
     def __init__(

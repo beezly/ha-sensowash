@@ -14,8 +14,126 @@
       }
     },
     "abort": {
-      "already_configured": "This device is already configured.",
+      "already_configured": "[%key:common::config_flow::abort::already_configured_device%]",
       "no_devices_found": "No SensoWash devices found nearby."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "SensoWash options",
+        "description": "Configure options for {address}.\n\nThe **pairing key** is only required for older serial-protocol models (Starck F Lite/Plus, i Lite/Plus). Leave blank for modern GATT devices.",
+        "data": {
+          "pairing_key": "Pairing key (hex, e.g. 01:23:45:67)"
+        }
+      }
+    },
+    "error": {
+      "invalid_pairing_key": "Pairing key must be 4 hex bytes (e.g. 01:23:45:67 or 01234567)."
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "wash_active": { "name": "Wash active" },
+      "dryer_active": { "name": "Dryer active" },
+      "lid_open":     { "name": "Lid" },
+      "seated":       { "name": "Occupied" },
+      "deodorizing":  { "name": "Deodorizing" }
+    },
+    "sensor": {
+      "seat_actual_temp": { "name": "Seat temperature" },
+      "error_status": {
+        "name": "Status",
+        "state": {
+          "ok": "OK"
+        }
+      }
+    },
+    "switch": {
+      "ambient_light":       { "name": "Ambient light" },
+      "uvc_light":           { "name": "HygieneUV light" },
+      "uvc_auto":            { "name": "HygieneUV automatic" },
+      "deodorization":       { "name": "Deodorization" },
+      "deodorization_auto":  { "name": "Automatic deodorization" },
+      "auto_flush":          { "name": "Automatic flush" },
+      "pre_flush":           { "name": "Pre-flush" },
+      "proximity_detection": { "name": "Proximity sensor" },
+      "mute":                { "name": "Mute" },
+      "seat_auto":           { "name": "Automatic seat" }
+    },
+    "select": {
+      "water_flow": {
+        "name": "Water flow",
+        "state": {
+          "low":    "Low",
+          "medium": "Medium",
+          "high":   "High"
+        }
+      },
+      "water_temperature": {
+        "name": "Water temperature",
+        "state": {
+          "off":    "Off",
+          "warm":   "Warm",
+          "warmer": "Warmer",
+          "hot":    "Hot"
+        }
+      },
+      "nozzle_position": {
+        "name": "Nozzle position",
+        "state": {
+          "position_1": "1 (forward)",
+          "position_2": "2",
+          "position_3": "3 (centre)",
+          "position_4": "4",
+          "position_5": "5 (rear)"
+        }
+      },
+      "seat_temperature": {
+        "name": "Seat heating",
+        "state": {
+          "off":    "Off",
+          "warm":   "Warm",
+          "warmer": "Warmer",
+          "hot":    "Hot"
+        }
+      },
+      "dryer_temperature": {
+        "name": "Dryer temperature",
+        "state": {
+          "off":    "Off",
+          "warm":   "Warm",
+          "warmer": "Warmer",
+          "hot":    "Hot"
+        }
+      },
+      "dryer_speed": {
+        "name": "Dryer speed",
+        "state": {
+          "normal": "Normal",
+          "turbo":  "Turbo"
+        }
+      },
+      "water_hardness": {
+        "name": "Water hardness",
+        "state": {
+          "soft":        "Soft",
+          "medium_soft": "Medium-soft",
+          "medium":      "Medium",
+          "medium_hard": "Medium-hard",
+          "hard":        "Hard"
+        }
+      }
+    },
+    "button": {
+      "start_rear_wash": { "name": "Start rear wash" },
+      "start_lady_wash": { "name": "Start lady wash" },
+      "stop":            { "name": "Stop" },
+      "flush":           { "name": "Flush" },
+      "open_lid":        { "name": "Open lid" },
+      "close_lid":       { "name": "Close lid" },
+      "start_dryer":     { "name": "Start dryer" },
+      "stop_dryer":      { "name": "Stop dryer" }
     }
   }
 }

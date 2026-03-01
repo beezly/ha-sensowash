@@ -6,19 +6,17 @@ import logging
 from datetime import timedelta
 from typing import Any
 
-from bleak_retry_connector import establish_connection, BleakClientWithServiceCache
-
-from homeassistant.components.bluetooth import (
-    async_ble_device_from_address,
-    async_last_service_info,
-)
-from homeassistant.core import HomeAssistant, callback
+from homeassistant.components.bluetooth import async_ble_device_from_address
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import CONF_ADDRESS
+from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from sensowash.client import SensoWashClient
-from sensowash.models import ErrorCode
+from sensowash.exceptions import ConnectionError as SensoConnectionError, PairingRequired
+from sensowash.models import DeviceCapabilities, ErrorCode
 
-from .const import DOMAIN, UPDATE_INTERVAL
+from .const import CONF_PAIRING_KEY, DOMAIN, UPDATE_INTERVAL
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -30,19 +28,38 @@ class SensoWashCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     State is primarily push-based (BLE notifications), with periodic full polls
     as a fallback. Automatically uses HA Bluetooth proxies if the device is
     reachable via one.
+
+    ``capabilities`` is populated after the first successful connection.
+    Platform setup functions use it to only register entities the toilet supports.
     """
 
-    def __init__(self, hass: HomeAssistant, address: str, name: str) -> None:
+    capabilities: DeviceCapabilities | None = None
+
+    def __init__(self, hass: HomeAssistant, entry: ConfigEntry) -> None:
         super().__init__(
             hass,
             _LOGGER,
-            name=f"SensoWash {name}",
+            name=f"SensoWash {entry.title}",
             update_interval=timedelta(seconds=UPDATE_INTERVAL),
         )
-        self.address = address
-        self.device_name = name
+        self._entry = entry
+        self.address: str = entry.data[CONF_ADDRESS]
+        self.device_name: str = entry.title
         self._client: SensoWashClient | None = None
         self._lock = asyncio.Lock()
+
+    # ── Pairing key ────────────────────────────────────────────────────────────
+
+    @property
+    def _pairing_key(self) -> bytes | None:
+        """Return the stored pairing key (from options), or None."""
+        hex_key: str | None = self._entry.options.get(CONF_PAIRING_KEY)
+        if hex_key:
+            try:
+                return bytes.fromhex(hex_key)
+            except ValueError:
+                _LOGGER.warning("Invalid pairing key in options (not valid hex)")
+        return None
 
     # ── BLE connection ─────────────────────────────────────────────────────────
 
@@ -52,24 +69,42 @@ class SensoWashCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             if self._client and self._client.is_connected:
                 return self._client
 
-            # Resolve BLEDevice through HA's bluetooth registry.
+            # Resolve BLEDevice through HA's Bluetooth registry.
             # This transparently routes through Bluetooth proxies (ESPHome etc.)
             ble_device = async_ble_device_from_address(
                 self.hass, self.address, connectable=True
             )
             if ble_device is None:
                 raise UpdateFailed(
-                    f"SensoWash {self.address} not reachable via Bluetooth"
+                    f"SensoWash {self.address} not reachable via Bluetooth. "
+                    "Ensure the toilet is powered and a Bluetooth adapter or proxy is nearby."
                 )
 
             _LOGGER.debug("Connecting to %s (%s)", self.device_name, self.address)
             client = SensoWashClient(
                 ble_device,
                 notification_cb=self._on_notification,
+                pairing_key=self._pairing_key,
             )
-            await client.connect()
+            try:
+                await client.connect()
+            except PairingRequired as exc:
+                raise UpdateFailed(
+                    f"{self.device_name} requires pairing. Go to the integration options "
+                    "to enter the pairing key, or use the sensowash-ble pair() tool to "
+                    "obtain one by pressing the Bluetooth button on the toilet."
+                ) from exc
+            except SensoConnectionError as exc:
+                raise UpdateFailed(str(exc)) from exc
+            except Exception as exc:  # noqa: BLE001
+                raise UpdateFailed(
+                    f"Unexpected error connecting to {self.device_name}: {exc}"
+                ) from exc
+
             self._client = client
-            _LOGGER.info("Connected to %s", self.device_name)
+            _LOGGER.info(
+                "Connected to %s (protocol: %s)", self.device_name, client.protocol
+            )
             return client
 
     async def async_disconnect(self) -> None:
@@ -84,39 +119,50 @@ class SensoWashCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
     # ── Push notifications ─────────────────────────────────────────────────────
 
-    @callback
     def _on_notification(self, uuid: str, data: bytes) -> None:
-        """Handle a BLE characteristic notification from the toilet."""
+        """Handle a BLE characteristic notification from the toilet.
+
+        Updates the coordinator data in-place and signals listeners without
+        doing a full poll.
+        """
         from sensowash.constants import CHARACTERISTICS
         from sensowash.models import (
-            OnOff, WaterFlow, WaterTemperature, NozzlePosition,
-            SeatTemperature, DryerTemperature, DryerSpeed, LidState, WaterHardness,
+            DryerSpeed,
+            DryerTemperature,
+            LidState,
+            NozzlePosition,
+            OnOff,
+            SeatTemperature,
+            WaterFlow,
+            WaterHardness,
+            WaterTemperature,
         )
 
-        if not data:
+        if not data or self.data is None:
             return
 
-        _CHAR_DECODERS = {
-            CHARACTERISTICS["WASH_STATE"]:          ("wash_state",         OnOff),
-            CHARACTERISTICS["WATER_FLOW"]:          ("water_flow",         WaterFlow),
-            CHARACTERISTICS["WATER_TEMPERATURE"]:   ("water_temperature",  WaterTemperature),
-            CHARACTERISTICS["NOZZLE_POSITION"]:     ("nozzle_position",    NozzlePosition),
-            CHARACTERISTICS["DRYER_STATE"]:         ("dryer_state",        OnOff),
-            CHARACTERISTICS["DRYER_TEMPERATURE"]:   ("dryer_temperature",  DryerTemperature),
-            CHARACTERISTICS["DRYER_SPEED"]:         ("dryer_speed",        DryerSpeed),
-            CHARACTERISTICS["FLUSH_AUTOMATIC"]:     ("flush_automatic",    OnOff),
-            CHARACTERISTICS["LID_STATE"]:           ("lid_state",          LidState),
-            CHARACTERISTICS["SEAT_STATE"]:          ("seat_state",         OnOff),
-            CHARACTERISTICS["SEAT_TEMPERATURE"]:    ("seat_temperature",   SeatTemperature),
-            CHARACTERISTICS["SEAT_ACTUAL_TEMP"]:    ("seat_actual_temp",   None),
-            CHARACTERISTICS["SEAT_PROXIMITY"]:      ("seat_proximity",     OnOff),
-            CHARACTERISTICS["DEODORIZATION_STATE"]: ("deodorization",      OnOff),
-            CHARACTERISTICS["DEODORIZATION_AUTO"]:  ("deodorization_auto", OnOff),
-            CHARACTERISTICS["AMBIENT_LIGHT_STATE"]: ("ambient_light",      OnOff),
-            CHARACTERISTICS["UVC_STATE"]:           ("uvc_light",          OnOff),
-            CHARACTERISTICS["UVC_AUTOMATIC"]:       ("uvc_auto",           OnOff),
-            CHARACTERISTICS["MUTE"]:                ("mute",               OnOff),
-            CHARACTERISTICS["ERROR_CODES"]:         ("error_codes",        "errors"),
+        _CHAR_DECODERS: dict[str, tuple[str, Any]] = {
+            CHARACTERISTICS["WASH_STATE"].lower():          ("wash_state",         OnOff),
+            CHARACTERISTICS["WATER_FLOW"].lower():          ("water_flow",         WaterFlow),
+            CHARACTERISTICS["WATER_TEMPERATURE"].lower():   ("water_temperature",  WaterTemperature),
+            CHARACTERISTICS["NOZZLE_POSITION"].lower():     ("nozzle_position",    NozzlePosition),
+            CHARACTERISTICS["DRYER_STATE"].lower():         ("dryer_state",        OnOff),
+            CHARACTERISTICS["DRYER_TEMPERATURE"].lower():   ("dryer_temperature",  DryerTemperature),
+            CHARACTERISTICS["DRYER_SPEED"].lower():         ("dryer_speed",        DryerSpeed),
+            CHARACTERISTICS["FLUSH_AUTOMATIC"].lower():     ("flush_automatic",    OnOff),
+            CHARACTERISTICS["LID_STATE"].lower():           ("lid_state",          LidState),
+            CHARACTERISTICS["SEAT_STATE"].lower():          ("seat_state",         OnOff),
+            CHARACTERISTICS["SEAT_TEMPERATURE"].lower():    ("seat_temperature",   SeatTemperature),
+            CHARACTERISTICS["SEAT_ACTUAL_TEMP"].lower():    ("seat_actual_temp",   None),
+            CHARACTERISTICS["SEAT_PROXIMITY"].lower():      ("seat_proximity",     OnOff),
+            CHARACTERISTICS["DEODORIZATION_STATE"].lower(): ("deodorization",      OnOff),
+            CHARACTERISTICS["DEODORIZATION_AUTO"].lower():  ("deodorization_auto", OnOff),
+            CHARACTERISTICS["AMBIENT_LIGHT_STATE"].lower(): ("ambient_light",      OnOff),
+            CHARACTERISTICS["UVC_STATE"].lower():           ("uvc_light",          OnOff),
+            CHARACTERISTICS["UVC_AUTOMATIC"].lower():       ("uvc_auto",           OnOff),
+            CHARACTERISTICS["MUTE"].lower():                ("mute",               OnOff),
+            CHARACTERISTICS["ERROR_CODES"].lower():         ("errors",             "errors"),
+            CHARACTERISTICS["WATER_HARDNESS"].lower():      ("water_hardness",     WaterHardness),
         }
 
         entry = _CHAR_DECODERS.get(uuid.lower())
@@ -124,9 +170,6 @@ class SensoWashCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             return
 
         key, decoder = entry
-        if self.data is None:
-            return
-
         if decoder == "errors":
             self.data[key] = ErrorCode.decode_payload(data)
         elif decoder is None:
@@ -137,35 +180,68 @@ class SensoWashCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             except ValueError:
                 self.data[key] = data[0]
 
-        self.async_set_updated_data(self.data)
+        self.async_set_updated_data(dict(self.data))
 
     # ── DataUpdateCoordinator ──────────────────────────────────────────────────
 
     async def _async_update_data(self) -> dict[str, Any]:
-        """Poll the toilet for a full state snapshot."""
+        """Poll the toilet for a full state + device info snapshot.
+
+        Also fetches capabilities on the first successful connection —
+        platform setup functions read ``self.capabilities`` to decide
+        which entities to register.
+        """
         try:
             client = await self._get_client()
+
+            # Fetch capabilities once per connection (after connect/reconnect)
+            if self.capabilities is None:
+                try:
+                    self.capabilities = await client.get_capabilities()
+                    _LOGGER.debug(
+                        "%s capabilities: %s",
+                        self.device_name,
+                        self.capabilities,
+                    )
+                except Exception as exc:  # noqa: BLE001
+                    _LOGGER.warning(
+                        "Could not fetch capabilities from %s: %s — "
+                        "all entities will be registered",
+                        self.device_name,
+                        exc,
+                    )
+
             state = await client.get_full_state()
             state["device_info"] = await client.get_device_info()
             return state
+
         except UpdateFailed:
             raise
-        except Exception as ex:
-            # Connection dropped — clear client so we reconnect next time
+        except Exception as exc:  # noqa: BLE001
             _LOGGER.warning(
-                "Lost connection to %s: %s. Will retry.", self.device_name, ex
+                "Lost connection to %s: %s. Will retry.", self.device_name, exc
             )
             async with self._lock:
                 self._client = None
-            raise UpdateFailed(f"Connection to {self.device_name} failed: {ex}") from ex
+            raise UpdateFailed(
+                f"Connection to {self.device_name} failed: {exc}"
+            ) from exc
 
     # ── Command helpers (used by entity platforms) ─────────────────────────────
 
-    async def async_command(self, method: str, *args, **kwargs) -> None:
-        """Call a method on the connected SensoWashClient."""
+    async def async_command(self, method: str, *args: Any, **kwargs: Any) -> None:
+        """Call a named method on the connected SensoWashClient and re-raise on failure."""
         try:
             client = await self._get_client()
             await getattr(client, method)(*args, **kwargs)
-        except Exception as ex:
-            _LOGGER.error("Command %s failed: %s", method, ex)
+        except UpdateFailed:
             raise
+        except Exception as exc:  # noqa: BLE001
+            _LOGGER.error("Command %s failed on %s: %s", method, self.device_name, exc)
+            raise
+
+    def supports(self, capability: str) -> bool:
+        """Return True if the toilet has this capability, or if capabilities are unknown."""
+        if self.capabilities is None:
+            return True  # unknown — show everything
+        return bool(getattr(self.capabilities, capability, False))

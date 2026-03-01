@@ -2,27 +2,30 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Callable, Any
+from typing import Any, Callable
 
 from homeassistant.components.binary_sensor import (
     BinarySensorDeviceClass,
     BinarySensorEntity,
     BinarySensorEntityDescription,
 )
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from sensowash.models import OnOff, LidState
+from sensowash.models import LidState, OnOff
 
-from .const import DOMAIN, ENTRY_COORDINATOR
+from . import SensoWashConfigEntry
 from .coordinator import SensoWashCoordinator
 from .entity import SensoWashEntity
 
 
 @dataclass(frozen=True, kw_only=True)
 class SensoWashBinarySensorDescription(BinarySensorEntityDescription):
+    """Extends BinarySensorEntityDescription with value callback and capability guard."""
+
     value_fn: Callable[[dict[str, Any]], bool | None]
+    # capability name on DeviceCapabilities; None = always show
+    capability: str | None = None
 
 
 BINARY_SENSORS: tuple[SensoWashBinarySensorDescription, ...] = (
@@ -31,46 +34,65 @@ BINARY_SENSORS: tuple[SensoWashBinarySensorDescription, ...] = (
         translation_key="wash_active",
         device_class=BinarySensorDeviceClass.RUNNING,
         value_fn=lambda d: d.get("wash_state") == OnOff.ON,
+        capability="rear_wash",
     ),
     SensoWashBinarySensorDescription(
         key="dryer_active",
         translation_key="dryer_active",
         device_class=BinarySensorDeviceClass.RUNNING,
         value_fn=lambda d: d.get("dryer_state") == OnOff.ON,
+        capability="dryer",
     ),
     SensoWashBinarySensorDescription(
         key="lid_open",
         translation_key="lid_open",
         device_class=BinarySensorDeviceClass.OPENING,
         value_fn=lambda d: d.get("lid_state") == LidState.OPEN,
+        capability="lid",
     ),
     SensoWashBinarySensorDescription(
         key="seated",
         translation_key="seated",
         device_class=BinarySensorDeviceClass.OCCUPANCY,
-        value_fn=lambda d: d.get("seat_state") == OnOff.ON,
+        value_fn=lambda d: (
+            # Serial: comes from state dict "seated" key
+            d.get("seated")
+            # GATT: seat_state characteristic
+            if "seated" in d
+            else d.get("seat_state") == OnOff.ON
+        ),
+        capability="proximity_detection",
     ),
     SensoWashBinarySensorDescription(
         key="deodorizing",
         translation_key="deodorizing",
-        value_fn=lambda d: d.get("deodorization") == OnOff.ON,
+        icon="mdi:air-filter",
+        value_fn=lambda d: (
+            d.get("deodorizing")        # serial state dict key
+            if "deodorizing" in d
+            else d.get("deodorization") == OnOff.ON
+        ),
+        capability="deodorization",
     ),
 )
 
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    entry: ConfigEntry,
+    entry: SensoWashConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
-    coordinator: SensoWashCoordinator = hass.data[DOMAIN][entry.entry_id][ENTRY_COORDINATOR]
+    coordinator = entry.runtime_data
     async_add_entities(
         SensoWashBinarySensor(coordinator, description)
         for description in BINARY_SENSORS
+        if description.capability is None or coordinator.supports(description.capability)
     )
 
 
 class SensoWashBinarySensor(SensoWashEntity, BinarySensorEntity):
+    """A binary sensor entity for SensoWash."""
+
     entity_description: SensoWashBinarySensorDescription
 
     def __init__(

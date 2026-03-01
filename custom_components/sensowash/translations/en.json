@@ -14,8 +14,22 @@
       }
     },
     "abort": {
-      "already_configured": "This device is already configured.",
+      "already_configured": "[%key:common::config_flow::abort::already_configured_device%]",
       "no_devices_found": "No SensoWash devices found nearby."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "SensoWash options",
+        "description": "Configure options for {address}.\n\nThe **pairing key** is only required for older serial-protocol models (Starck F Lite/Plus, i Lite/Plus). Leave blank for modern GATT devices.",
+        "data": {
+          "pairing_key": "Pairing key (hex, e.g. 01:23:45:67)"
+        }
+      }
+    },
+    "error": {
+      "invalid_pairing_key": "Pairing key must be 4 hex bytes (e.g. 01:23:45:67 or 01234567)."
     }
   },
   "entity": {
@@ -51,63 +65,63 @@
       "water_flow": {
         "name": "Water flow",
         "state": {
-          "Low":    "Low",
-          "Medium": "Medium",
-          "High":   "High"
+          "low":    "Low",
+          "medium": "Medium",
+          "high":   "High"
         }
       },
       "water_temperature": {
         "name": "Water temperature",
         "state": {
-          "Off":    "Off",
-          "Warm":   "Warm",
-          "Warmer": "Warmer",
-          "Hot":    "Hot"
+          "off":    "Off",
+          "warm":   "Warm",
+          "warmer": "Warmer",
+          "hot":    "Hot"
         }
       },
       "nozzle_position": {
         "name": "Nozzle position",
         "state": {
-          "1 (forward)": "1 (forward)",
-          "2":           "2",
-          "3 (centre)":  "3 (centre)",
-          "4":           "4",
-          "5 (rear)":    "5 (rear)"
+          "position_1": "1 (forward)",
+          "position_2": "2",
+          "position_3": "3 (centre)",
+          "position_4": "4",
+          "position_5": "5 (rear)"
         }
       },
       "seat_temperature": {
         "name": "Seat heating",
         "state": {
-          "Off":    "Off",
-          "Warm":   "Warm",
-          "Warmer": "Warmer",
-          "Hot":    "Hot"
+          "off":    "Off",
+          "warm":   "Warm",
+          "warmer": "Warmer",
+          "hot":    "Hot"
         }
       },
       "dryer_temperature": {
         "name": "Dryer temperature",
         "state": {
-          "Off":    "Off",
-          "Warm":   "Warm",
-          "Warmer": "Warmer",
-          "Hot":    "Hot"
+          "off":    "Off",
+          "warm":   "Warm",
+          "warmer": "Warmer",
+          "hot":    "Hot"
         }
       },
       "dryer_speed": {
         "name": "Dryer speed",
         "state": {
-          "Normal": "Normal",
-          "Turbo":  "Turbo"
+          "normal": "Normal",
+          "turbo":  "Turbo"
         }
       },
       "water_hardness": {
         "name": "Water hardness",
         "state": {
-          "Soft":         "Soft",
-          "Medium-soft":  "Medium-soft",
-          "Medium":       "Medium",
-          "Medium-hard":  "Medium-hard",
-          "Hard":         "Hard"
+          "soft":        "Soft",
+          "medium_soft": "Medium-soft",
+          "medium":      "Medium",
+          "medium_hard": "Medium-hard",
+          "hard":        "Hard"
         }
       }
     },
