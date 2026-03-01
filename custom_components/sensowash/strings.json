@@ -1,0 +1,21 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Set up SensoWash",
+        "description": "Found {found} SensoWash device(s) nearby. Select one below, or enter a Bluetooth address manually.",
+        "data": {
+          "address": "Device"
+        }
+      },
+      "bluetooth_confirm": {
+        "title": "Found SensoWash",
+        "description": "Do you want to set up **{name}** ({address})?"
+      }
+    },
+    "abort": {
+      "already_configured": "This device is already configured.",
+      "no_devices_found": "No SensoWash devices found nearby."
+    }
+  }
+}
