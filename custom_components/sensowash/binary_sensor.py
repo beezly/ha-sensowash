@@ -53,6 +53,7 @@ BINARY_SENSORS: tuple[SensoWashBinarySensorDescription, ...] = (
     SensoWashBinarySensorDescription(
         key="seated",
         translation_key="seated",
+        icon="mdi:toilet",
         device_class=BinarySensorDeviceClass.OCCUPANCY,
         # Serial protocol only — reads bitmask bits from toilet state response.
         # Not available on GATT devices (no live occupancy characteristic exists).
