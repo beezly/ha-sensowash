@@ -1,12 +1,16 @@
 """Select entities for SensoWash (enum settings)."""
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass
 from typing import Any
+
+_LOGGER = logging.getLogger(__name__)
 
 from homeassistant.components.select import SelectEntity, SelectEntityDescription
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.restore_state import RestoreEntity
 
 from sensowash.models import (
     DryerSpeed,
@@ -152,8 +156,13 @@ async def async_setup_entry(
     )
 
 
-class SensoWashSelect(SensoWashEntity, SelectEntity):
-    """A select entity for SensoWash."""
+class SensoWashSelect(SensoWashEntity, SelectEntity, RestoreEntity):
+    """A select entity for SensoWash.
+
+    Uses RestoreEntity to remember the last known value across restarts so that
+    settings which the toilet doesn't report (e.g. water flow on serial protocol)
+    don't show as unknown after every HA restart.
+    """
 
     entity_description: SensoWashSelectDescription
 
@@ -165,6 +174,31 @@ class SensoWashSelect(SensoWashEntity, SelectEntity):
         super().__init__(coordinator, description.key)
         self.entity_description = description
         self._attr_options = description.options
+
+    async def async_added_to_hass(self) -> None:
+        """Restore last known state if the coordinator doesn't have a value yet."""
+        await super().async_added_to_hass()
+
+        # Only restore if the device hasn't reported a value for this key
+        if self.coordinator.data and self.coordinator.data.get(
+            self.entity_description.state_key
+        ) is not None:
+            return
+
+        last_state = await self.async_get_last_state()
+        if last_state and last_state.state in self.entity_description.options:
+            # Inject the restored enum value into coordinator data so current_option
+            # picks it up without a separate _attr override
+            if self.coordinator.data is not None:
+                self.coordinator.data[self.entity_description.state_key] = (
+                    self.entity_description.options_map[last_state.state]
+                )
+                _LOGGER.debug(
+                    "%s: restored %s = %s from previous state",
+                    self.coordinator.device_name,
+                    self.entity_description.state_key,
+                    last_state.state,
+                )
 
     @property
     def current_option(self) -> str | None:
