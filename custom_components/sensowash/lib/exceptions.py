@@ -29,3 +29,7 @@ class CommandTimeout(SensoWashError):
 
 class UnsupportedFeature(SensoWashError):
     """Raised when a method is called that this toilet model does not support."""
+
+
+class SerialTimeout(SensoWashError):
+    """Raised when a serial protocol request produces no response."""
