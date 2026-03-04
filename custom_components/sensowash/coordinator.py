@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from datetime import timedelta
+from datetime import datetime, timedelta
 from typing import Any
 
 from bleak_retry_connector import BleakClientWithServiceCache, establish_connection
@@ -15,12 +15,16 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .lib.client import SensoWashClient
-from .lib.exceptions import ConnectionError as SensoConnectionError, PairingRequired
+from .lib.exceptions import ConnectionError as SensoConnectionError, PairingRequired, SerialTimeout
 from .lib.models import DeviceCapabilities, ErrorCode
 
 from .const import CONF_PAIRING_KEY, DOMAIN, UPDATE_INTERVAL
 
 _LOGGER = logging.getLogger(__name__)
+
+_UNAVAILABLE_AFTER = timedelta(minutes=5)
+_MAX_BACKOFF_SECS  = 60
+_BASE_BACKOFF_SECS = 5
 
 
 class SensoWashCoordinator(DataUpdateCoordinator[dict[str, Any]]):
@@ -49,6 +53,9 @@ class SensoWashCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         self.device_name: str = entry.title
         self._client: SensoWashClient | None = None
         self._lock = asyncio.Lock()
+        self._consecutive_failures: int = 0
+        self._last_success: datetime | None = None
+        self._normal_interval = timedelta(seconds=UPDATE_INTERVAL)
 
     # ── Pairing key ────────────────────────────────────────────────────────────
 
@@ -226,6 +233,57 @@ class SensoWashCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
         self.async_set_updated_data(dict(self.data))
 
+    # ── Failure tracking ───────────────────────────────────────────────────────
+
+    def _record_success(self) -> None:
+        """Reset failure tracking and restore normal poll interval."""
+        self._consecutive_failures = 0
+        self._last_success = datetime.now()
+        if self.update_interval != self._normal_interval:
+            self.update_interval = self._normal_interval
+            _LOGGER.debug("%s: recovered, restoring normal poll interval", self.device_name)
+
+    def _record_failure(self) -> dict[str, Any]:
+        """
+        Handle a transient serial timeout.
+
+        - Returns existing coordinator data unchanged if within the unavailability window.
+        - Raises UpdateFailed (entities go unavailable) once the window expires.
+        - Adjusts update_interval with exponential backoff.
+        """
+        self._consecutive_failures += 1
+        now = datetime.now()
+
+        if self._last_success is not None:
+            dark_for = now - self._last_success
+            if dark_for > _UNAVAILABLE_AFTER:
+                _LOGGER.warning(
+                    "%s: no response for %s — marking unavailable",
+                    self.device_name,
+                    dark_for,
+                )
+                raise UpdateFailed(
+                    f"{self.device_name} unreachable for {dark_for}"
+                )
+
+        backoff = min(
+            _BASE_BACKOFF_SECS * (2 ** (self._consecutive_failures - 1)),
+            _MAX_BACKOFF_SECS,
+        )
+        new_interval = timedelta(seconds=backoff)
+        if self.update_interval != new_interval:
+            self.update_interval = new_interval
+            _LOGGER.debug(
+                "%s: serial timeout #%d, backing off to %ds",
+                self.device_name,
+                self._consecutive_failures,
+                backoff,
+            )
+
+        if self.data:
+            return dict(self.data)
+        raise UpdateFailed("No data yet and toilet is not responding")
+
     # ── DataUpdateCoordinator ──────────────────────────────────────────────────
 
     async def _async_update_data(self) -> dict[str, Any]:
@@ -300,8 +358,15 @@ class SensoWashCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             if self.data:
                 merged = dict(self.data)
                 merged.update(state)
-                return merged
-            return state
+                result = merged
+            else:
+                result = state
+
+            self._record_success()
+            return result
+
+        except SerialTimeout:
+            return self._record_failure()
 
         except UpdateFailed:
             raise

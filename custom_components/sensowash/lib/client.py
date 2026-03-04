@@ -1020,7 +1020,10 @@ class SensoWashClient:
         to know which shape you received.
         """
         if self._serial:
-            state = await self.get_toilet_state_raw() or {}
+            from .exceptions import SerialTimeout
+            state = await self.get_toilet_state_raw()
+            if state is None:
+                raise SerialTimeout("Toilet state request timed out (op=0x52)")
             errors = await self.get_error_codes()
             hw = await self.get_water_hardness()
             state["protocol"] = "serial"
